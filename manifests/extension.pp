@@ -56,6 +56,10 @@
 #   File containing answers for interactive extension setup. Supported
 #   *providers*: pear, pecl.
 #
+# [*priority*]
+#   Priority of the php extension
+#   *osfamily*: Debian only for now
+#
 define php::extension (
   $ensure            = 'installed',
   $provider          = undef,
@@ -70,6 +74,7 @@ define php::extension (
   $settings          = {},
   $settings_prefix   = false,
   $sapi              = 'ALL',
+  $priority          = undef,
   $responsefile      = undef,
 ) {
 
@@ -195,6 +200,16 @@ define php::extension (
 
   if $::osfamily == 'Debian' and $ext_tool_enabled {
     $cmd = "${ext_tool_enable} -s ${sapi} ${lowercase_title}"
+
+    if $priority {
+      file_line { "Set ${title} priority":
+        path     => "${config_root_ini}/${lowercase_title}.ini",
+        line     => "; priority=${priority}",
+        match    => '^;\s*priority\s*=\s*\d+\s$',
+        multiple => false,
+        before   => Php::Config[$title]
+      }
+    }
 
     if $sapi == 'ALL' {
       exec { $cmd:
