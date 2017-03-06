@@ -41,6 +41,10 @@
 #   String parameter, whether to specify ALL sapi or a specific sapi.
 #   Defaults to ALL.
 #
+# [*priority*]
+#   Priority of the php extension
+#   *osfamily*: Debian only for now
+#
 define php::extension::config (
   String                   $ensure          = 'installed',
   Optional[Php::Provider]  $provider        = undef,
@@ -50,6 +54,7 @@ define php::extension::config (
   Hash                     $settings        = {},
   Variant[Boolean, String] $settings_prefix = false,
   Php::Sapi                $sapi            = 'ALL',
+  Optional[Integer]        $priority        = undef,
 ) {
 
   if ! defined(Class['php']) {
@@ -89,12 +94,22 @@ define php::extension::config (
 
   # Ubuntu/Debian systems use the mods-available folder. We need to enable
   # settings files ourselves with php5enmod command.
-  $ext_tool_enable   = pick_default($::php::ext_tool_enable, $::php::params::ext_tool_enable)
-  $ext_tool_query    = pick_default($::php::ext_tool_query, $::php::params::ext_tool_query)
-  $ext_tool_enabled  = pick_default($::php::ext_tool_enabled, $::php::params::ext_tool_enabled)
+  $ext_tool_enable  = pick_default($::php::ext_tool_enable,  $::php::params::ext_tool_enable)
+  $ext_tool_query   = pick_default($::php::ext_tool_query,   $::php::params::ext_tool_query)
+  $ext_tool_enabled = pick_default($::php::ext_tool_enabled, $::php::params::ext_tool_enabled)
 
   if $::osfamily == 'Debian' and $ext_tool_enabled {
     $cmd = "${ext_tool_enable} -s ${sapi} ${so_name}"
+
+    if $priority {
+      file_line { "Set ${title} priority":
+        path     => "${config_root_ini}/${ini_name}.ini",
+        line     => "; priority=${priority}",
+        match    => '^;\s*priority\s*=\s*\d+\s$',
+        multiple => false,
+        before   => Php::Config[$title]
+      }
+    }
 
     $_sapi = $sapi? {
       'ALL' => 'cli',

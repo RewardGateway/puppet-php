@@ -48,20 +48,25 @@
 #   String parameter, whether to specify ALL sapi or a specific sapi.
 #   Defaults to ALL.
 #
+# [*priority*]
+#   Priority of the php extension
+#   *osfamily*: Debian only for now
+#
 # [*responsefile*]
 #   File containing answers for interactive extension setup. Supported
 #   *providers*: pear, pecl.
 #
 define php::extension (
-  String           $ensure            = 'installed',
-  Optional[Php::Provider] $provider   = undef,
-  Optional[String] $source            = undef,
-  Optional[String] $so_name           = downcase($name),
-  Optional[String] $php_api_version   = undef,
-  String           $package_prefix    = $::php::package_prefix,
-  Boolean          $zend              = false,
-  Hash             $settings          = {},
-  Php::Sapi        $sapi              = 'ALL',
+  String                         $ensure            = 'installed',
+  Optional[Php::Provider]        $provider          = undef,
+  Optional[String]               $source            = undef,
+  Optional[String]               $so_name           = downcase($name),
+  Optional[String]               $php_api_version   = undef,
+  String                         $package_prefix    = $::php::package_prefix,
+  Boolean                        $zend              = false,
+  Hash                           $settings          = {},
+  Php::Sapi                      $sapi              = 'ALL',
+  Optional[Integer]              $priority          = undef,
   Variant[Boolean, String]       $settings_prefix   = false,
   Optional[Stdlib::AbsolutePath] $responsefile      = undef,
   Variant[String, Array[String]] $header_packages   = [],
@@ -93,6 +98,7 @@ define php::extension (
       settings        => $settings,
       settings_prefix => $settings_prefix,
       sapi            => $sapi,
+      priority        => $priority,
       subscribe       => Php::Extension::Install[$title],
     }
   }
